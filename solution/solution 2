@@ -1,0 +1,68 @@
+create table student(rollno int primary key,name varchar,class varchar,birthdate date);
+create table course(courseno int primary key,coursename varchar,max_marks int,pass_marks int);
+create table sc(rollno int references student(rollno),courseno int references course(courseno),marks int);
+pragma foreign_keys=on;
+insert into student values(1,"Om","FY","1-jun-2003"),(2,"Sai","FY","22-apr-2003"),(3,"Ram","FY","12-nov-2003"),(4,"Jay","SY","5-jan-2002"),(5,"Raj","SY","14-feb-2002"),(6,"Shiv","SY","6-Mar-2002"),(7,"Nath","TY","17-Dec-2001"),(8,"Seeta","TY","15-aug-2002"),(9,"Raj","TY","27-dec-2001");
+insert into course values(101,"Maths",100,35),(102,"Database Management System",100,35),(201,"Computer Network",100,35),(202,"CPPM",100,35),(301,"Operating System",100,35),(302,"Programmer Skill",100,35),(303,"Practical",200,150);
+insert into sc values(1,101,60),(1,102,55);
+insert into sc values(2,101,90),(2,102,88);
+insert into sc values(3,101,40),(3,102,34);
+insert into sc values(4,201,72),(4,202,70);
+insert into sc values(5,201,25),(5,202,34);
+insert into sc values(6,201,88),(6,202,74);
+insert into sc values(7,301,41),(7,302,30);
+insert into sc values(8,301,65),(8,302,73);
+insert into sc values(9,301,50),(9,302,61);
+select * from student;
+select * from course;
+select * from sc;
+
+select student.rollno,name,class,birthdate,course.coursename from ((student inner join sc on student.rollno=sc.rollno)inner join course on sc.courseno=course.courseno) where coursename="Database Management System";
+
+
+select name from ((student inner join sc on student.rollno=sc.rollno) inner join course on sc.courseno=course.courseno) where course.coursename="Computer Network" and sc.marks>=(70*100)/100 and sc.marks>=35;
+
+
+select student.name,avg(sc.marks) as "Avg marks" from student inner join sc on student.rollno=sc.rollno group by student.name;
+
+
+select coursename from course where pass_marks>(select avg(max_marks)+avg(max_marks)*30/100 from course);
+
+
+select coursename from course;
+
+
+select s.rollno,name,class,birthdate,max(sc.marks) as "max marks" from ((student s inner join sc on s.rollno=sc.rollno)inner join course on sc.courseno=course.courseno) where course.coursename="Computer Network";
+
+
+select s.name,class,c.coursename from ((student s inner join sc on s.rollno=sc.rollno) inner join course c on sc.courseno=c.courseno) where s.class="SY" group by s.name;
+
+
+select s.name,avg(sc.marks) as "Avg marks" from student s inner join sc on s.rollno=sc.rollno group by s.name;
+
+
+create trigger studmark before delete on sc
+begin
+select case
+when old.marks>(select pass_marks from course) then
+raise(abort,'Can not delete record who pass the exam')
+end;
+end;
+
+
+create trigger ins before insert on sc
+begin
+select case
+when new.marks>(select max_marks from course) or new.marks<0 then
+raise(abort,'can not insert marks')
+end;
+end;
+
+
+create trigger upd before update on sc
+begin
+select case
+when new.marks>(select max_marks from course) or new.marks<0 then
+raise(abort,'cannot update your marks')
+end;
+end;
